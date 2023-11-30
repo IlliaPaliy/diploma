@@ -1,6 +1,7 @@
-import re
 import requests
 from bs4 import BeautifulSoup
+import re
+
 
 salaries = {}
 
@@ -75,6 +76,7 @@ def scrape_salary_data(url, data_selector_table, salaries_array):
         print(f'Error: {e}')
     return salaries_array
 
+
 def scrape_all_years():
     for year in range(2010, 2023):
         salaries[str(year)] = {}
@@ -85,6 +87,6 @@ def scrape_certain_year(year):
     salaries[str(year)] = {}
     salaries[str(year)] = scrape_salary_data('https://index.minfin.com.ua/ua/labour/salary/average/' + str(year),'.glue-table', salaries[str(year)])
     return salaries
-# if __name__ == "__main__":
+
 
 

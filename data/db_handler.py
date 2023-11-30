@@ -1,7 +1,7 @@
 import sqlite3
 
 def create_database():
-    connection = sqlite3.connect('salary_data.db')
+    connection = sqlite3.connect('data/salary_data.db')
     cursor = connection.cursor()
 
     # Create a table to store salary data
@@ -19,7 +19,7 @@ def create_database():
     connection.close()
 
 def insert_data(year, region, month, average_salary):
-    connection = sqlite3.connect('salary_data.db')
+    connection = sqlite3.connect('data/salary_data.db')
     cursor = connection.cursor()
 
     # Insert data into the salary_data table
@@ -33,7 +33,7 @@ def insert_data(year, region, month, average_salary):
 
 def check_connection():
     try:
-        connection = sqlite3.connect('salary_data.db')
+        connection = sqlite3.connect('data/salary_data.db')
         connection.close()
         return True
     except sqlite3.Error:

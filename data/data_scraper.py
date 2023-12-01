@@ -5,6 +5,25 @@ import re
 
 salaries = {}
 
+def scrape_unemployment_data(url):
+    unemployment_rates = {}
+    year = 2000
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            table = soup.select("#idx-wrapper table")
+            rows = table[1].select("big")
+            for row in rows:
+                unemployment_rate = float(row.text.replace(',', '.'))
+                unemployment_rates[str(year)] = unemployment_rate
+                year+=1
+        else:
+            return (f'Failed to retrieve data. Status code: {response.status_code}')
+    except Exception as e:
+        return (f'Error: {e}')
+    return unemployment_rates
+
 def scrape_salary_data(url, data_selector_table, salaries_array):
     try:
         response = requests.get(url)
@@ -69,11 +88,11 @@ def scrape_salary_data(url, data_selector_table, salaries_array):
                             except Exception as e:
                                 continue
                         else:
-                            print('Could not find the salary data element in a row.')
+                            print ('Could not find the salary data element in a row.')
         else:
-            print(f'Failed to retrieve data. Status code: {response.status_code}')
+            return (f'Failed to retrieve data. Status code: {response.status_code}')
     except Exception as e:
-        print(f'Error: {e}')
+        return (f'Error: {e}')
     return salaries_array
 
 

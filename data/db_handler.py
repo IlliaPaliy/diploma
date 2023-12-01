@@ -1,4 +1,5 @@
 import sqlite3
+import os
 def create_databases():
     try:
         connection = sqlite3.connect('data/salary_data.db')
@@ -85,6 +86,7 @@ def insert_unemployment_data(year, rate):
     connection.commit()
     connection.close()
 
+
 def check_connection():
     try:
         connection = sqlite3.connect('data/salary_data.db')
@@ -92,5 +94,4 @@ def check_connection():
         return True
     except sqlite3.Error:
         return False
-
 

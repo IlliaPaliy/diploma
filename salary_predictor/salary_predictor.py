@@ -76,18 +76,27 @@ def build_model(input_dim):
     return model
 
 
-def scale_data(X_train, X_val, y_train, y_val):
+def scale_data(X_train, X_val, y_train, y_val, scaler_X_prev=None, scaler_y_prev=None):
     # Create and fit the scaler for X
     scaler_X = MinMaxScaler()
     X_train_scaled = scaler_X.fit_transform(X_train)
     X_val_scaled = scaler_X.transform(X_val)
+
+    # Use the scaler from the previous year if available
+    if scaler_X_prev is not None:
+        X_val_scaled = scaler_X_prev.transform(X_val)
 
     # Create and fit the scaler for y
     scaler_y = MinMaxScaler()
     y_train_scaled = scaler_y.fit_transform(y_train.reshape(-1, 1)).flatten()
     y_val_scaled = scaler_y.transform(y_val.reshape(-1, 1)).flatten()
 
+    # Use the scaler from the previous year if available
+    if scaler_y_prev is not None:
+        y_val_scaled = scaler_y_prev.transform(y_val.reshape(-1, 1)).flatten()
+
     return X_train_scaled, X_val_scaled, y_train_scaled, y_val_scaled, scaler_X, scaler_y
+
 
 
 def inverse_scale_predictions(predictions, scaler):
@@ -99,24 +108,32 @@ def inverse_scale_predictions(predictions, scaler):
     predictions_original_scale = predictions_normalized * (original_max - original_min) + original_min
     return predictions_original_scale
 
-def save_scalers(scaler_X, scaler_y):
+def save_scalers(year, scaler_X, scaler_y, scaler_dir='scalers'):
+    scaler_X_filename = f'{scaler_dir}/scaler_X_{year}.pkl'
+    scaler_y_filename = f'{scaler_dir}/scaler_y_{year}.pkl'
 
-    with open('scalers/scaler_X.pkl', 'wb') as file:
+    with open(scaler_X_filename, 'wb') as file:
         pickle.dump(scaler_X, file)
 
-    with open('scalers/scaler_y.pkl', 'wb') as file:
+    with open(scaler_y_filename, 'wb') as file:
         pickle.dump(scaler_y, file)
 
-def load_scalers():
-    with open('scalers/scaler_X.pkl', 'rb') as file:
+
+def load_scalers(year, scaler_dir='scalers'):
+    scaler_X_filename = f'{scaler_dir}/scaler_X_{year}.pkl'
+    scaler_y_filename = f'{scaler_dir}/scaler_y_{year}.pkl'
+
+    with open(scaler_X_filename, 'rb') as file:
         scaler_X = pickle.load(file)
 
-    with open('scalers/scaler_y.pkl', 'rb') as file:
+    with open(scaler_y_filename, 'rb') as file:
         scaler_y = pickle.load(file)
 
     return scaler_X, scaler_y
 
-def train_model(X_train, y_train, X_val, y_val, model_checkpoint_path='best_model.h5', scaler_dir='scalers'):
+
+
+def train_model(X_train, y_train, X_val, y_val, year, model_checkpoint_path='best_model.h5', scaler_dir='scalers'):
     model = build_model(X_train.shape[1])
 
     # Save the best model and scalers during training
@@ -129,9 +146,16 @@ def train_model(X_train, y_train, X_val, y_val, model_checkpoint_path='best_mode
         save_weights_only=False  # Save the entire model, including architecture and optimizer state
     )
 
+    # Attempt to load the scaler from the previous year
+    try:
+        scaler_X_prev, scaler_y_prev = load_scalers(year - 1, scaler_dir)
+    except FileNotFoundError:
+        scaler_X_prev, scaler_y_prev = None, None
+
     # Scale the data
-    X_train_scaled, X_val_scaled, y_train_scaled, y_val_scaled, scaler_X, scaler_y = scale_data(X_train, X_val, y_train,
-                                                                                                y_val)
+    X_train_scaled, X_val_scaled, y_train_scaled, y_val_scaled, scaler_X, scaler_y = scale_data(
+        X_train, X_val, y_train, y_val, scaler_X_prev, scaler_y_prev
+    )
 
     if len(X_train_scaled) != 12:
         print(f"Incomplete data. Skipping training.")
@@ -150,9 +174,12 @@ def train_model(X_train, y_train, X_val, y_val, model_checkpoint_path='best_mode
 
     # Save the scalers only when the model is saved
     if os.path.exists(model_checkpoint_path):
-        save_scalers(scaler_X, scaler_y)
+        save_scalers(year, scaler_X, scaler_y, scaler_dir)
 
     return model, history, scaler_X, scaler_y
+
+
+
 
 
 
@@ -257,7 +284,7 @@ def main():
             X_train_region, y_train_region = preprocess_data(load_data(year, region))
             X_val_region, y_val_region = preprocess_data(load_data(year + 1, region))
 
-            trained_model, history, scaler_X, scaler_y = train_model(X_train_region, y_train_region, X_val_region, y_val_region)
+            trained_model, history, scaler_X, scaler_y = train_model(X_train_region, y_train_region, X_val_region, y_val_region, year)
 
             # Test the model on the validation set
             test_model(X_val_region, y_val_region, model_path='best_model.h5', scaler_X=scaler_X, scaler_y=scaler_y)
@@ -270,10 +297,11 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
-    scaler_X, scaler_y = load_scalers()
-    predicted_salaries = get_predicted_salaries(2020, "м.Київ", scaler_X=scaler_X, scaler_y=scaler_y)
+    # main()
+    year = 2010
+    scaler_X, scaler_y = load_scalers(year)
+    predicted_salaries = get_predicted_salaries(year, "м.Київ", scaler_X=scaler_X, scaler_y=scaler_y)
 
     if predicted_salaries is not None:
-        print(f"Predicted Salaries for Україна in 2021:\n{predicted_salaries}")
+        print(f"Predicted Salaries for Україна in {year+1}:\n{predicted_salaries}")
 

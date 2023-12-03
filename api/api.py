@@ -3,6 +3,7 @@ from data.data_scraper import scrape_average_salary_all_years, scrape_dollar_rat
 from data.db_handler import check_connection, create_databases, insert_salary_data as db_insert_salary_data, insert_unemployment_data, \
     insert_dollar_rate_data as db_insert_dollar_rate_data, clear_table
 
+from salary_predictor.salary_predictor import prediction_for_all_regions, prediction_for_certain_region
 app = Flask(__name__)
 
 
@@ -85,6 +86,14 @@ def insert_unemployment_rate_data():
 def clear_selected_table(table):
     clear_table(table)
     return jsonify({"status": "success", "message": "Selected table was cleared successfully."})
+
+@app.route('/api/predict_all_regions/<int:year>', methods=['GET'])
+def predict_all_regions(year):
+    return jsonify(prediction_for_all_regions(year-1))
+
+@app.route('/api/predict_certain_region/<int:year>/<string:region>', methods=['GET'])
+def predict_certain_region(year, region):
+    return jsonify(prediction_for_certain_region(year, region))
 
 if __name__ == '__main__':
     app.run(debug=True)

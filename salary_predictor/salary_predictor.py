@@ -178,11 +178,6 @@ def train_model(X_train, y_train, X_val, y_val, year, model_checkpoint_path='bes
 
     return model, history, scaler_X, scaler_y
 
-
-
-
-
-
 def test_model(X_test, y_test, model_path='best_model.h5', scaler_X=None, scaler_y=None):
     model = load_model(model_path)
     y_pred_normalized = model.predict(X_test)
@@ -271,7 +266,29 @@ def region_data_is_complete(year, region):
     df = load_data(year, region)
     return not (df.empty or df.shape[0] != 12)
 
-def main():
+
+def prediction_for_all_regions(year):
+    predictions = {}
+    predictions[str(year)] = {}
+    for region in regions:
+        if(region_data_is_complete):
+            prediction = prediction_for_certain_region(year, region)
+            if prediction is not None:
+                predictions[str(year)][region] = {}
+                predictions[str(year)][region] = prediction_for_certain_region(year, region)
+    print(predictions)
+
+
+def prediction_for_certain_region(year, region):
+    year -= 1
+    scaler_X, scaler_y = load_scalers(year)
+    predicted_salaries = get_predicted_salaries(year, region, scaler_X=scaler_X, scaler_y=scaler_y)
+
+    if predicted_salaries is not None:
+        return predicted_salaries
+
+
+def train_execution():
     complete_regions = []
 
     for region in regions:
@@ -297,11 +314,6 @@ def main():
 
 
 if __name__ == "__main__":
-    # main()
-    year = 2010
-    scaler_X, scaler_y = load_scalers(year)
-    predicted_salaries = get_predicted_salaries(year, "м.Київ", scaler_X=scaler_X, scaler_y=scaler_y)
-
-    if predicted_salaries is not None:
-        print(f"Predicted Salaries for Україна in {year+1}:\n{predicted_salaries}")
+    # train_execution()
+    prediction_for_all_regions(2020)
 

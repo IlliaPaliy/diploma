@@ -2,13 +2,12 @@ import requests
 from bs4 import BeautifulSoup
 import re
 
-
 salaries = {}
 dollar_rates = {}
 months_dictionary = {"1": "січень", "2": "лютий", "3": "березень",
-          "4": "квітень", "5": "травень", "6":"червень",
-          "7": "липень", "8": "серпень", "9": "вересень",
-          "10": "жовтень", "11": "листопад", "12": "грудень"}
+                     "4": "квітень", "5": "травень", "6": "червень",
+                     "7": "липень", "8": "серпень", "9": "вересень",
+                     "10": "жовтень", "11": "листопад", "12": "грудень"}
 
 
 def scrape_unemployment_data(url="https://index.minfin.com.ua/ua/labour/unemploy/"):
@@ -23,7 +22,7 @@ def scrape_unemployment_data(url="https://index.minfin.com.ua/ua/labour/unemploy
             for row in rows:
                 unemployment_rate = float(row.text.replace(',', '.'))
                 unemployment_rates[str(year)] = unemployment_rate
-                year+=1
+                year += 1
         else:
             return (f'Failed to retrieve data. Status code: {response.status_code}')
     except Exception as e:
@@ -39,10 +38,10 @@ def scrape_dollar_rate(url, dollar_rate_array):
             tables = soup.select('.idx-currency table')
             for table in tables:
                 caption = table.select("caption")
-                if('Середній курс обміну валют' in str(caption[0])):
+                if ('Середній курс обміну валют' in str(caption[0])):
                     rows = table.select("tr")
                     for row in rows:
-                        if('долар США' in str(row)):
+                        if ('долар США' in str(row)):
                             buy_rate_cell = row.select("td:nth-child(3)")
                             sell_rate_cell = row.select("td:nth-child(6)")
                             buy_rate = float(buy_rate_cell[0].text.replace(',', '.'))
@@ -74,9 +73,9 @@ def scrape_salary_data(url, data_selector_table, salaries_array):
                 month_counter = 0
                 finished = False
                 for cell in td_elements:
-                    if("first-column" in str(cell)):
+                    if ("first-column" in str(cell)):
                         region_name = pattern.findall(str(cell))
-                        if(region_name[0] in salaries_array):
+                        if (region_name[0] in salaries_array):
                             continue
                         else:
                             salaries_array[region_name[0]] = {}
@@ -86,10 +85,10 @@ def scrape_salary_data(url, data_selector_table, salaries_array):
                             try:
                                 average_salary = float(salary_element.text.replace(',', ''))
                                 # print(f'Average Salary on {region_name[0]}: {average_salary}')
-                                if(len(salaries_array[region_name[0]])<3):
-                                    if(month_counter==0):
+                                if (len(salaries_array[region_name[0]]) < 3):
+                                    if (month_counter == 0):
                                         salaries_array[region_name[0]]["січень"] = average_salary
-                                    elif month_counter==1:
+                                    elif month_counter == 1:
                                         salaries_array[region_name[0]]["лютий"] = average_salary
                                     else:
                                         salaries_array[region_name[0]]["березень"] = average_salary
@@ -118,27 +117,32 @@ def scrape_salary_data(url, data_selector_table, salaries_array):
                                     else:
                                         salaries_array[region_name[0]]["грудень"] = average_salary
                                         finished = True
-                                month_counter+=1
+                                month_counter += 1
                             except Exception as e:
                                 continue
                         else:
-                            print ('Could not find the salary data element in a row.')
+                            print('Could not find the salary data element in a row.')
         else:
             return (f'Failed to retrieve data. Status code: {response.status_code}')
     except Exception as e:
         return (f'Error: {e}')
     return salaries_array
 
+
 def scrape_average_salary_all_years():
     for year in range(2010, 2023):
         salaries[str(year)] = {}
-        salaries[str(year)] = scrape_salary_data('https://index.minfin.com.ua/ua/labour/salary/average/' + str(year), '.glue-table', salaries[str(year)])
+        salaries[str(year)] = scrape_salary_data('https://index.minfin.com.ua/ua/labour/salary/average/' + str(year),
+                                                 '.glue-table', salaries[str(year)])
     return salaries
+
 
 def scrape_average_salary_certain_year(year):
     salaries[str(year)] = {}
-    salaries[str(year)] = scrape_salary_data('https://index.minfin.com.ua/ua/labour/salary/average/' + str(year),'.glue-table', salaries[str(year)])
+    salaries[str(year)] = scrape_salary_data('https://index.minfin.com.ua/ua/labour/salary/average/' + str(year),
+                                             '.glue-table', salaries[str(year)])
     return salaries
+
 
 def scrape_dollar_rate_all_years():
     for year in range(2010, 2022):
@@ -149,8 +153,11 @@ def scrape_dollar_rate_all_years():
             else:
                 month_str = str(month)
             dollar_rates[str(year)][months_dictionary[str(month)]] = {}
-            dollar_rates[str(year)][months_dictionary[str(month)]] = scrape_dollar_rate('https://index.minfin.com.ua/ua/exchange/archive/' + str(year) +'-'+ month_str +'-10', dollar_rates[str(year)][months_dictionary[str(month)]])
+            dollar_rates[str(year)][months_dictionary[str(month)]] = scrape_dollar_rate(
+                'https://index.minfin.com.ua/ua/exchange/archive/' + str(year) + '-' + month_str + '-10',
+                dollar_rates[str(year)][months_dictionary[str(month)]])
     return dollar_rates
+
 
 def scrape_dollar_rate_certain_year(year):
     dollar_rates[str(year)] = {}
@@ -160,6 +167,7 @@ def scrape_dollar_rate_certain_year(year):
         else:
             month_str = str(month)
         dollar_rates[str(year)][months_dictionary[str(month)]] = {}
-        dollar_rates[str(year)][months_dictionary[str(month)]] = scrape_dollar_rate('https://index.minfin.com.ua/ua/exchange/archive/' + str(year) + '-' + month_str + '-10', dollar_rates[str(year)][months_dictionary[str(month)]])
+        dollar_rates[str(year)][months_dictionary[str(month)]] = scrape_dollar_rate(
+            'https://index.minfin.com.ua/ua/exchange/archive/' + str(year) + '-' + month_str + '-10',
+            dollar_rates[str(year)][months_dictionary[str(month)]])
     return dollar_rates
-

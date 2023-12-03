@@ -1,9 +1,12 @@
 from flask import Flask, jsonify
-from data.data_scraper import scrape_average_salary_all_years, scrape_dollar_rate_all_years, scrape_unemployment_data, scrape_dollar_rate_certain_year
-from data.db_handler import check_connection, create_databases, insert_salary_data as db_insert_salary_data, insert_unemployment_data, \
+from data.data_scraper import scrape_average_salary_all_years, scrape_dollar_rate_all_years, scrape_unemployment_data, \
+    scrape_dollar_rate_certain_year
+from data.db_handler import check_connection, create_databases, insert_salary_data as db_insert_salary_data, \
+    insert_unemployment_data, \
     insert_dollar_rate_data as db_insert_dollar_rate_data, clear_table
 
 from salary_predictor.salary_predictor import prediction_for_all_regions, prediction_for_certain_region
+
 app = Flask(__name__)
 
 
@@ -44,6 +47,7 @@ def create_dbs():
     create_databases()
     return jsonify({'status': 'success', 'message': 'Databases were created successfully'})
 
+
 @app.route('/api/insert_salary_data', methods=['POST'])
 def insert_salary_data():
     try:
@@ -82,18 +86,22 @@ def insert_unemployment_rate_data():
     except Exception as e:
         return jsonify({"status": "error", "message": f"Error: {e}"})
 
+
 @app.route('/api/clear_table/<string:table>', methods=['DELETE'])
 def clear_selected_table(table):
     clear_table(table)
     return jsonify({"status": "success", "message": "Selected table was cleared successfully."})
 
+
 @app.route('/api/predict_all_regions/<int:year>', methods=['GET'])
 def predict_all_regions(year):
-    return jsonify(prediction_for_all_regions(year-1))
+    return jsonify(prediction_for_all_regions(year - 1))
+
 
 @app.route('/api/predict_certain_region/<int:year>/<string:region>', methods=['GET'])
 def predict_certain_region(year, region):
     return jsonify(prediction_for_certain_region(year, region))
+
 
 if __name__ == '__main__':
     app.run(debug=True)

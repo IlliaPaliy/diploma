@@ -1,5 +1,7 @@
 import sqlite3
 import os
+
+
 def create_databases():
     try:
         connection = sqlite3.connect('data/salary_data.db')
@@ -44,6 +46,7 @@ def create_databases():
     finally:
         connection.close()
 
+
 def insert_salary_data(year, region, month, average_salary):
     connection = sqlite3.connect('data/salary_data.db')
     cursor = connection.cursor()
@@ -54,6 +57,7 @@ def insert_salary_data(year, region, month, average_salary):
     ''', (year, region, month, average_salary))
     connection.commit()
     connection.close()
+
 
 def insert_dollar_rate_data(year, month, buy_rate, sell_rate):
     connection = sqlite3.connect('data/salary_data.db')
@@ -67,6 +71,7 @@ def insert_dollar_rate_data(year, month, buy_rate, sell_rate):
     connection.commit()
     connection.close()
 
+
 def clear_table(table_name):
     connection = sqlite3.connect('data/salary_data.db')
     cursor = connection.cursor()
@@ -74,6 +79,7 @@ def clear_table(table_name):
     cursor.execute(query)
     connection.commit()
     connection.close()
+
 
 def insert_unemployment_data(year, rate):
     connection = sqlite3.connect('data/salary_data.db')
@@ -94,4 +100,3 @@ def check_connection():
         return True
     except sqlite3.Error:
         return False
-

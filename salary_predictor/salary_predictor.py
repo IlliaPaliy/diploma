@@ -44,7 +44,7 @@ def load_data(year, region=None):
         WHERE salary_data.year = {year}
         {region_filter};
     '''
-    connection = sqlite3.connect('../data/salary_data.db')
+    connection = sqlite3.connect('data/salary_data.db')
     df = pd.read_sql_query(query, connection)
     df['month'] = df['month'].map(month_mapping)
     return df
@@ -107,8 +107,8 @@ def save_scalers(year, scaler_X, scaler_y, scaler_dir='scalers'):
 
 
 def load_scalers(year, scaler_dir='scalers'):
-    scaler_X_filename = f'{scaler_dir}/scaler_X_{year}.pkl'
-    scaler_y_filename = f'{scaler_dir}/scaler_y_{year}.pkl'
+    scaler_X_filename = f'salary_predictor/scalers/scaler_X_{year}.pkl'
+    scaler_y_filename = f'salary_predictor/scalers/scaler_y_{year}.pkl'
 
     with open(scaler_X_filename, 'rb') as file:
         scaler_X = pickle.load(file)
@@ -119,7 +119,7 @@ def load_scalers(year, scaler_dir='scalers'):
     return scaler_X, scaler_y
 
 
-def train_model(X_train, y_train, X_val, y_val, year, model_checkpoint_path='best_model.h5', scaler_dir='scalers'):
+def train_model(X_train, y_train, X_val, y_val, year, model_checkpoint_path='salary_predictor/best_model.h5', scaler_dir='scalers'):
     model = build_model(X_train.shape[1])
     model_checkpoint = ModelCheckpoint(
         model_checkpoint_path,
@@ -160,7 +160,7 @@ def test_model(X_test, y_test, model_path='best_model.h5', scaler_X=None, scaler
     print(f'Mean Squared Error on Test Set: {mse_test}')
 
 
-def predict_salary_for_region(year, region, model_path='best_model.h5', scaler_path='scaler.pkl'):
+def predict_salary_for_region(year, region, model_path='salary_predictor/best_model.h5', scaler_path='scaler.pkl'):
     df = load_data(year, region)
     df_region = df[df['region'] == region]
     if df_region.empty:
@@ -178,7 +178,7 @@ def predict_salary_for_region(year, region, model_path='best_model.h5', scaler_p
     return predicted_salaries_dict
 
 
-def get_predicted_salaries(year, region, model_path='best_model.h5', scaler_X=None, scaler_y=None):
+def get_predicted_salaries(year, region, model_path='salary_predictor/best_model.h5', scaler_X=None, scaler_y=None):
     df = load_data(year, region)
     df_region = df[df['region'] == region]
     if df_region.empty:
@@ -192,6 +192,7 @@ def get_predicted_salaries(year, region, model_path='best_model.h5', scaler_X=No
     X_scaled = scaler_X.transform(X)
     predicted_salaries_normalized = model.predict(X_scaled)
     predicted_salaries = inverse_scale_predictions(predicted_salaries_normalized, scaler_y)
+    predicted_salaries = predicted_salaries.astype(float)
     months = list(month_mapping.keys())
     predicted_salaries_dict = {month: salary for month, salary in zip(months, predicted_salaries)}
     return predicted_salaries_dict
@@ -204,14 +205,14 @@ def region_data_is_complete(year, region):
 
 def prediction_for_all_regions(year):
     predictions = {}
-    predictions[str(year)] = {}
+    predictions[str(year+1)] = {}
     for region in regions:
         if (region_data_is_complete):
             prediction = prediction_for_certain_region(year, region)
             if prediction is not None:
-                predictions[str(year)][region] = {}
-                predictions[str(year)][region] = prediction_for_certain_region(year, region)
-    print(predictions)
+                predictions[str(year+1)][region] = {}
+                predictions[str(year+1)][region] = prediction_for_certain_region(year, region)
+    return (predictions)
 
 
 def prediction_for_certain_region(year, region):
@@ -241,5 +242,4 @@ def train_execution():
                 print(f"Predicted Salaries for {region} in {year + 1}:\n{predicted_salaries}")
 
 
-if __name__ == "__main__":
-    prediction_for_all_regions(2020)
+
